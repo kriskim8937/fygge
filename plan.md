@@ -27,14 +27,20 @@ John Bauer (1882–1918) was a Swedish illustrator known for his work in the fai
 
 All assets must honour this aesthetic. No sharp vector edges, no bright palette, no cartoon bounce. Think watercolour-over-ink.
 
-### Character Options (choose one)
-| Character | Personality | Notes |
-|-----------|-------------|-------|
-| **Tomte (forest gnome)** | Cautious, curious | Most authentic to Bauer; small red cap, grey coat |
-| **Young princess** | Wandering, lost | Classic Bauer motif — lone child in vast forest |
-| **Hedgehog** | Low to ground, questing | Charming; avoids human anatomy complexity |
+### Character — The Cloaked Listener
 
-**Recommendation: Tomte.** Most tonally correct for the Bauer universe and the most visually iconic.
+A fictional forest animal with long rabbit-like ears, permanently closed eyes, and a flowing cape. No confirmed species — deliberately ambiguous, somewhere between hare, spirit, and forest creature.
+
+**Design notes for the graphic designer:**
+- Long ears, slightly drooped — expressive without needing a face
+- Eyes always closed — navigates by sound, which ties directly to the music mechanic
+- Cape / cloak: muted tone (dark moss green, charcoal, or deep ochre) — drapes naturally, moves with jumps
+- Small, low silhouette — feels humble against the vast forest backdrop
+- No bright colours — palette must sit inside the Bauer muted range
+- Avoid cute/cartoon softness — this creature is solemn and ancient, not whimsical
+
+**Why this works:**
+The closed eyes make the character a perfect vessel for an audio-first game — it *listens* its way through the forest. Visually distinctive and original; fits the Bauer mood better than any pre-existing folklore character.
 
 ---
 
@@ -273,12 +279,12 @@ Or link directly to `/game/index.html` as a full-page experience.
 
 ### For the Graphic Designer
 
-**Character (Tomte)**
-- Idle animation: 4–6 frames
-- Walk left / right: 6–8 frames each
-- Jump: 3–4 frames (rise + peak + fall)
-- Interact / react animation: 3–4 frames (bow or look up)
-- Lands softly — no hard bounce
+**Character (The Cloaked Listener)**
+- Idle: 4–6 frames — subtle cape sway, ear twitch
+- Walk left / right: 6–8 frames each — cape flows behind
+- Jump: 4 frames — ears lift on rise, cape billows, soft land
+- Interact / react: 3–4 frames — ears perk up, slight head tilt (reacting to sound)
+- All animations should feel weightless and quiet — no bouncy timing
 
 **Background — single illustrated scene (960×540px)**
 - One full painterly composition, John Bauer style
@@ -406,4 +412,4 @@ The game is complete when:
 
 ---
 
-*Document version 1.1 — updated with audio implementation detail, sound designer brief, and corrected feasibility assessment*
+*Document version 1.3 — character locked: Cloaked Listener (long-eared, closed-eyed, caped forest creature)*

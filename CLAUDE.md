@@ -39,7 +39,7 @@ game/
 
 ## Key Design Rules
 - **Single-screen platformer** — fixed camera, full scene always visible, no scrolling
-- Character (Tomte) jumps between platforms to reach objects
+- Character (The Cloaked Listener — long-eared, closed-eyed, caped forest creature) jumps between platforms to reach objects
 - Platforms are integrated into the illustrated background (roots, rocks, branches, ledges)
 - Interact near object → VFX burst + SFX → stem fades in
 - 5 platforms, 5 objects → 5 audio stems, found in any order
@@ -52,7 +52,7 @@ game/
 ## Team
 - **Developer (you):** Phaser setup, audio, interaction, VFX, build/deploy
 - **Sound Designer:** 5 stems + ambient + 5 SFX + end sting
-- **Graphic Designer:** 1 full illustrated background scene (platforms must be readable as surfaces), Tomte sprites (idle/walk/jump/interact), 5 objects (idle + activated states), UI, start/end screens
+- **Graphic Designer:** 1 full illustrated background scene (platforms must be readable as surfaces), Cloaked Listener sprites (idle/walk/jump/interact — long ears, closed eyes, flowing cape), 5 objects (idle + activated states), UI, start/end screens
 
 ## Dev Commands
 ```bash
