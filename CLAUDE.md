@@ -38,10 +38,11 @@ game/
 ```
 
 ## Key Design Rules
-- **Static single-screen scene** — no scrolling, no player character
-- All 5 objects are **visible from the start** — interaction reveals them, not exploration
-- Click an object → VFX burst + SFX → stem fades in
-- 5 interactable objects → 5 audio stems, found in any order
+- **Single-screen platformer** — fixed camera, full scene always visible, no scrolling
+- Character (Tomte) jumps between platforms to reach objects
+- Platforms are integrated into the illustrated background (roots, rocks, branches, ledges)
+- Interact near object → VFX burst + SFX → stem fades in
+- 5 platforms, 5 objects → 5 audio stems, found in any order
 - All 32 stem combinations must sound musically coherent
 - Stems never drop out once unlocked — additive only
 - All stem sources start at the same AudioContext timestamp (sync-critical)
@@ -51,7 +52,7 @@ game/
 ## Team
 - **Developer (you):** Phaser setup, audio, interaction, VFX, build/deploy
 - **Sound Designer:** 5 stems + ambient + 5 SFX + end sting
-- **Graphic Designer:** 1 full illustrated background scene, 5 objects (idle + activated states), UI, start/end screens
+- **Graphic Designer:** 1 full illustrated background scene (platforms must be readable as surfaces), Tomte sprites (idle/walk/jump/interact), 5 objects (idle + activated states), UI, start/end screens
 
 ## Dev Commands
 ```bash

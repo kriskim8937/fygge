@@ -5,7 +5,7 @@
 
 ## Overview
 
-A short, atmospheric browser game set in a John Bauer-style illustrated world. The player controls a small character through a magical forest scene, discovering hidden objects. Each object interaction unlocks a new stem in a layered musical score — collecting all objects completes the composition. The game is designed to run directly in Chrome as a portfolio piece.
+A short, atmospheric browser game set in a John Bauer-style illustrated world. The player controls a small character across a **single-screen platformer scene** — jumping between platforms built into the illustrated forest. Each platform holds one interactable object. Reaching and interacting with an object unlocks a new stem in a layered musical score — collecting all five completes the composition. The game is designed to run directly in Chrome as a portfolio piece.
 
 **Duration:** ~5 minutes of gameplay
 **Team:** 1 Developer (you), 1 Sound Designer, 1 Graphic Designer
@@ -42,39 +42,40 @@ All assets must honour this aesthetic. No sharp vector edges, no bright palette,
 
 ### Core Loop
 ```
-Player sees full scene at once → clicks / hovers an object →
-VFX burst plays on the object → sound effect triggers →
-new music stem fades in → collect all 5 → full composition plays → gentle end screen
+Player spawns at ground level → moves and jumps across platforms →
+reaches an object → presses interact key → VFX burst plays →
+sound effect triggers → new music stem fades in →
+collect all 5 → full composition plays → gentle end screen
 ```
 
 ### Scene Structure
-One **static, single-screen composition** — no scrolling, no movement. All 5 objects are visible at once, arranged naturally across the illustrated scene. The player interacts directly by clicking objects.
+One **static, single-screen platformer** — the full scene is visible at all times, no camera scrolling. Platforms are integrated into the illustrated background (roots, rocks, branches, stone ledges). Each platform holds one interactable object.
 
-There is **no player character** traversing the world. The viewpoint is the player's — like looking at an illustrated painting that comes alive.
+| Platform | Object | Position | Music Stem |
+|----------|--------|----------|------------|
+| Ground level, left | Ancient mossy stone with runes | Low, accessible | Bass drone / low strings |
+| Large root arch | Sleeping troll curled under a root | Mid height, left | Cello melody |
+| Pond lily pad / rock | Water lily with a resting frog | Mid height, centre | Woodwind motif (flute/oboe) |
+| Tree branch | Glowing lantern hanging from a branch | High, right | Harp / plucked strings |
+| Raised rocky clearing | Owl perched on a skull-shaped rock | High, far right | Full choir / final resolution |
 
-| Object | Position in scene | Music Stem Added |
-|--------|------------------|-----------------|
-| Ancient mossy stone with runes | Lower left | Bass drone / low strings |
-| Sleeping troll curled under a root | Mid left | Cello melody |
-| Water lily with a resting frog | Centre, pond area | Woodwind motif (flute/oboe) |
-| Glowing lantern hanging from a branch | Upper right | Harp / plucked strings |
-| Owl perched on a skull-shaped rock | Lower right | Full choir / final resolution |
-
-*5 objects = 5 stems. Final stem completes the piece.*
+*5 platforms = 5 objects = 5 stems. Final stem completes the piece.*
 
 ### Controls
-- **Mouse click** on any visible object to interact
-- Optional: subtle idle glow / hover highlight to invite interaction
-- No movement, no fail state, no timer — purely point-and-click
+- **Arrow keys / WASD** — move left / right
+- **Spacebar** — jump (single jump; double jump TBD)
+- **E or Spacebar near object** — interact
+- No combat, no fail state, no timer — purely exploratory platforming
 
 ### Interaction Feedback
-When a player clicks an object:
+When the player interacts with an object:
 1. **VFX burst on the object** — particle splash, light bloom, shimmer ring, or glow pulse (style per object)
 2. **Object animation** — wakes, glows, opens eyes, flickers on
-3. **Sound effect** — short tuned tone (1–3 sec) bridging click to stem fade-in
-4. **Music stem crossfades in** — always additive, stems never drop out
-5. **Object settles into an "activated" idle state** — remains glowing/alive
-6. **UI indicator** — small illustrated frame at bottom fills in (1 of 5 slots)
+3. **Character reaction** — small bow or look-up animation (2–3 frames)
+4. **Sound effect** — short tuned tone (1–3 sec) bridging interact to stem fade-in
+5. **Music stem crossfades in** — always additive, stems never drop out
+6. **Object settles into activated idle state** — remains glowing/alive
+7. **UI indicator** — small illustrated frame at bottom fills in (1 of 5 slots)
 
 ---
 
@@ -272,12 +273,19 @@ Or link directly to `/game/index.html` as a full-page experience.
 
 ### For the Graphic Designer
 
-**No player character** — removed from scope. The viewer is the player.
+**Character (Tomte)**
+- Idle animation: 4–6 frames
+- Walk left / right: 6–8 frames each
+- Jump: 3–4 frames (rise + peak + fall)
+- Interact / react animation: 3–4 frames (bow or look up)
+- Lands softly — no hard bounce
 
 **Background — single illustrated scene (960×540px)**
 - One full painterly composition, John Bauer style
-- Should read as a complete illustration even before any objects are activated
-- Can be layered (sky + mid + foreground) for subtle depth, but no scrolling
+- Must read as a complete illustration even before any objects are activated
+- Platforms (roots, rocks, branches, ledges) must be clearly readable as stand-on-able surfaces
+- Can be layered (sky + mid + foreground) for subtle depth, but **no scrolling**
+- Designer should coordinate platform positions with developer so collision shapes match the art
 
 **Interactable Objects (each needs idle + activated state)**
 - Runed stone (idle: dark; activated: softly glowing)
@@ -305,8 +313,10 @@ Or link directly to `/game/index.html` as a full-page experience.
 
 ### ✅ What is clearly achievable
 - Stem-layering audio system — well-understood Web Audio pattern, no exotic APIs
-- Static single-screen scene — simpler than scrolling, very reliable in browser
-- Click interaction on visible objects — no proximity detection needed
+- Single-screen platformer — fixed camera, simpler than scrolling; well supported in Phaser arcade physics
+- Platform collision — Phaser static group + arcade physics, standard pattern
+- Jump mechanics — straightforward in Phaser arcade physics
+- Proximity interact on key press — standard trigger zone check
 - Particle VFX on interaction — Phaser particle emitter, straightforward
 - Sprite animation system — built into Phaser
 - Static hosting on portfolio — zero infrastructure needed
@@ -329,8 +339,7 @@ Or link directly to `/game/index.html` as a full-page experience.
 | **32-combination audio coherence** — stems heard in any order | High | Sound designer briefed explicitly; compositional approach must be drone/texture-based, not melodically interdependent |
 
 ### ❌ What is out of scope (deliberately)
-- Player character / movement
-- Parallax scrolling
+- Camera scrolling / large world
 - Mobile / touch support
 - Save state / progress persistence
 - Multiple levels or scenes
