@@ -42,37 +42,39 @@ All assets must honour this aesthetic. No sharp vector edges, no bright palette,
 
 ### Core Loop
 ```
-Player moves through scene → approaches glowing/subtle object →
-presses interact key / clicks → animation plays → new music stem fades in →
-collect all stems → full composition plays → gentle end screen
+Player sees full scene at once → clicks / hovers an object →
+VFX burst plays on the object → sound effect triggers →
+new music stem fades in → collect all 5 → full composition plays → gentle end screen
 ```
 
 ### Scene Structure
-One continuous horizontal scene (parallax scrolling or single wide canvas). The world is divided into loose **zones**, each containing one interactable object.
+One **static, single-screen composition** — no scrolling, no movement. All 5 objects are visible at once, arranged naturally across the illustrated scene. The player interacts directly by clicking objects.
 
-| Zone | Object | Music Stem Added |
-|------|--------|-----------------|
-| Forest entrance | Ancient mossy stone with runes | Bass drone / low strings |
-| Root hollow | Sleeping troll curled under a root | Cello melody |
-| Pond / bog | Water lily with a resting frog | Woodwind motif (flute/oboe) |
-| Tall oak | Glowing lantern hanging from a branch | Harp / plucked strings |
-| Deep clearing | Owl perched on a skull-shaped rock | Full choir / final resolution |
+There is **no player character** traversing the world. The viewpoint is the player's — like looking at an illustrated painting that comes alive.
+
+| Object | Position in scene | Music Stem Added |
+|--------|------------------|-----------------|
+| Ancient mossy stone with runes | Lower left | Bass drone / low strings |
+| Sleeping troll curled under a root | Mid left | Cello melody |
+| Water lily with a resting frog | Centre, pond area | Woodwind motif (flute/oboe) |
+| Glowing lantern hanging from a branch | Upper right | Harp / plucked strings |
+| Owl perched on a skull-shaped rock | Lower right | Full choir / final resolution |
 
 *5 objects = 5 stems. Final stem completes the piece.*
 
 ### Controls
-- **Arrow keys / WASD** — move character left/right
-- **Spacebar or E** — interact when near an object
-- **Mouse click** on object — alternative interact
-- No combat, no fail state, no timer pressure — purely exploratory
+- **Mouse click** on any visible object to interact
+- Optional: subtle idle glow / hover highlight to invite interaction
+- No movement, no fail state, no timer — purely point-and-click
 
 ### Interaction Feedback
-When a player interacts with an object:
-1. Short sprite animation on the object (shimmer, open eyes, glow pulse)
-2. Character does a small reaction animation (looks up, bows head)
-3. Floating musical note particles rise briefly
-4. New audio stem crossfades in (always additive — stems never drop out)
-5. Subtle UI indicator (e.g., a small illustrated frame at bottom showing collected items)
+When a player clicks an object:
+1. **VFX burst on the object** — particle splash, light bloom, shimmer ring, or glow pulse (style per object)
+2. **Object animation** — wakes, glows, opens eyes, flickers on
+3. **Sound effect** — short tuned tone (1–3 sec) bridging click to stem fade-in
+4. **Music stem crossfades in** — always additive, stems never drop out
+5. **Object settles into an "activated" idle state** — remains glowing/alive
+6. **UI indicator** — small illustrated frame at bottom fills in (1 of 5 slots)
 
 ---
 
@@ -270,17 +272,12 @@ Or link directly to `/game/index.html` as a full-page experience.
 
 ### For the Graphic Designer
 
-**Character (Tomte)**
-- Idle animation: 4–6 frames
-- Walk left / right: 6–8 frames each
-- Interact animation: 4 frames (reach out / bow)
-- Surprised/reaction: 2–3 frames
+**No player character** — removed from scope. The viewer is the player.
 
-**Background layers (parallax, 1920px wide recommended)**
-- Layer 1: Sky / fog (furthest, slow scroll)
-- Layer 2: Distant trees silhouettes
-- Layer 3: Mid-ground trees and roots
-- Layer 4: Ground / foreground details (closest, fast scroll)
+**Background — single illustrated scene (960×540px)**
+- One full painterly composition, John Bauer style
+- Should read as a complete illustration even before any objects are activated
+- Can be layered (sky + mid + foreground) for subtle depth, but no scrolling
 
 **Interactable Objects (each needs idle + activated state)**
 - Runed stone (idle: dark; activated: softly glowing)
@@ -308,12 +305,12 @@ Or link directly to `/game/index.html` as a full-page experience.
 
 ### ✅ What is clearly achievable
 - Stem-layering audio system — well-understood Web Audio pattern, no exotic APIs
-- Phaser 3 2D platformer/explorer — well documented, reliable in Chrome
-- Parallax scrolling background — standard Phaser feature
+- Static single-screen scene — simpler than scrolling, very reliable in browser
+- Click interaction on visible objects — no proximity detection needed
+- Particle VFX on interaction — Phaser particle emitter, straightforward
 - Sprite animation system — built into Phaser
 - Static hosting on portfolio — zero infrastructure needed
-- 5-minute game loop — very manageable scope
-- Single scene, no procedural generation — straightforward to build
+- 5-minute experience loop — very manageable scope
 - First-time-only stem fade-ins — trivial with Web Audio API gain scheduling; loops run at constant volume after
 
 ### ⚠️ Risks to manage
@@ -332,6 +329,8 @@ Or link directly to `/game/index.html` as a full-page experience.
 | **32-combination audio coherence** — stems heard in any order | High | Sound designer briefed explicitly; compositional approach must be drone/texture-based, not melodically interdependent |
 
 ### ❌ What is out of scope (deliberately)
+- Player character / movement
+- Parallax scrolling
 - Mobile / touch support
 - Save state / progress persistence
 - Multiple levels or scenes

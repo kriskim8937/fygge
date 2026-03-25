@@ -38,6 +38,9 @@ game/
 ```
 
 ## Key Design Rules
+- **Static single-screen scene** — no scrolling, no player character
+- All 5 objects are **visible from the start** — interaction reveals them, not exploration
+- Click an object → VFX burst + SFX → stem fades in
 - 5 interactable objects → 5 audio stems, found in any order
 - All 32 stem combinations must sound musically coherent
 - Stems never drop out once unlocked — additive only
@@ -46,9 +49,9 @@ game/
 - AudioContext must be resumed on first user gesture
 
 ## Team
-- **Developer (you):** Phaser setup, game loop, audio, interaction, build/deploy
+- **Developer (you):** Phaser setup, audio, interaction, VFX, build/deploy
 - **Sound Designer:** 5 stems + ambient + 5 SFX + end sting
-- **Graphic Designer:** Tomte sprites, 4 BG layers, 5 objects, UI, start/end screens
+- **Graphic Designer:** 1 full illustrated background scene, 5 objects (idle + activated states), UI, start/end screens
 
 ## Dev Commands
 ```bash
