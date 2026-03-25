@@ -16,14 +16,31 @@ const AIR_ACCEL       = 0.07;  // very limited steering mid-air
 const JUMP_CUT        = 0.01;  // multiply upward velocity by this on early key release (lower = shorter hop)
 
 // Platform layout: { x, y, w } — y is top surface
-// Jump height with v=-520, g=800 → ~169px max
+// Jump height with v=-420, g=800 → ~110px max
+// Four tiers: ground(490) → tier1(425) → tier2(340) → tier3(255) → tier4(170)
+// Vertical gap between tiers: ~85px — safely under 110px limit
+// Object platforms keep indices 1–5 so OBJECTS array stays unchanged
 const PLATFORMS = [
-  { x: 480, y: GROUND_Y, w: W },          // ground (full width)
-  { x: 130, y: 360,      w: 150 },        // low left
-  { x: 320, y: 220,      w: 140 },        // mid left — 140px above P1 ✓
-  { x: 510, y: 360,      w: 150 },        // mid right — gap jump from P2
-  { x: 700, y: 210,      w: 140 },        // high right — 150px above P3 ✓
-  { x: 860, y: 340,      w: 120 },        // far right — step down from P4
+  // — Tier 0: ground —
+  { x: 480, y: GROUND_Y, w: W },          //  0: full floor
+
+  // — Object platforms (indices 1–5 reserved) —
+  { x: 110, y: 425,      w: 80 },         //  1: [Frog]     tier1, far left
+  { x: 150, y: 255,      w: 80 },         //  2: [obj2]     tier3, left
+  { x: 400, y: 255,      w: 80 },         //  3: [Mushroom] tier3, centre
+  { x: 640, y: 170,      w: 80 },         //  4: [obj4]     tier4, centre-right
+  { x: 870, y: 340,      w: 75 },         //  5: [obj5]     tier2, far right
+
+  // — Stepping stones —
+  { x: 280, y: 425,      w: 70 },         //  6: tier1, centre-left
+  { x: 210, y: 340,      w: 70 },         //  7: tier2, left       (P1/6 → P2)
+  { x: 530, y: 425,      w: 70 },         //  8: tier1, centre
+  { x: 460, y: 340,      w: 70 },         //  9: tier2, centre     (P8 → P3)
+  { x: 530, y: 255,      w: 70 },         // 10: tier3, centre-right (P9 → P4)
+  { x: 680, y: 340,      w: 70 },         // 11: tier2, centre-right
+  { x: 790, y: 255,      w: 70 },         // 12: tier3, right
+  { x: 760, y: 425,      w: 70 },         // 13: tier1, right
+  { x: 500, y: 170,      w: 70 },         // 14: tier4, centre     (P10 → P4)
 ];
 
 // Objects sit on top of platforms (index = PLATFORMS index)
