@@ -2,17 +2,31 @@ import Phaser from 'phaser';
 import AudioManager from '../systems/AudioManager.js';
 import InteractionSystem from '../systems/InteractionSystem.js';
 
-const WORLD_WIDTH = 4800;
-const GAME_HEIGHT = 540;
+const W = 960;
+const H = 540;
+const GROUND_Y = 490;
 const PLAYER_SPEED = 160;
-const GROUND_Y = 400;
+const JUMP_VELOCITY = -520;
+const INTERACT_DIST = 70;
 
-const ZONES = [
-  { key: 'stone',   x: 600,  stemIndex: 0, label: 'Forest Entrance', color: 0x6a5a3a },
-  { key: 'troll',   x: 1400, stemIndex: 1, label: 'Root Hollow',     color: 0x3a5a2a },
-  { key: 'lily',    x: 2400, stemIndex: 2, label: 'Pond',            color: 0x2a4a5a },
-  { key: 'lantern', x: 3200, stemIndex: 3, label: 'Tall Oak',        color: 0x5a4a1a },
-  { key: 'owl',     x: 4200, stemIndex: 4, label: 'Deep Clearing',   color: 0x4a2a5a },
+// Platform layout: { x, y, w } — y is top surface
+// Jump height with v=-520, g=800 → ~169px max
+const PLATFORMS = [
+  { x: 480, y: GROUND_Y, w: W },          // ground (full width)
+  { x: 130, y: 360,      w: 150 },        // low left
+  { x: 320, y: 220,      w: 140 },        // mid left — 140px above P1 ✓
+  { x: 510, y: 360,      w: 150 },        // mid right — gap jump from P2
+  { x: 700, y: 210,      w: 140 },        // high right — 150px above P3 ✓
+  { x: 860, y: 340,      w: 120 },        // far right — step down from P4
+];
+
+// Objects sit on top of platforms (index = PLATFORMS index)
+const OBJECTS = [
+  { platformIdx: 1, stemIndex: 0, key: 'frog',     label: 'Frog',     color: 0x2a5a1a },
+  { platformIdx: 2, stemIndex: 1, key: 'obj2',     label: 'TBD',      color: 0x3a3a3a },
+  { platformIdx: 3, stemIndex: 2, key: 'mushroom', label: 'Mushroom', color: 0x7a3a5a },
+  { platformIdx: 4, stemIndex: 3, key: 'obj4',     label: 'TBD',      color: 0x3a3a3a },
+  { platformIdx: 5, stemIndex: 4, key: 'obj5',     label: 'TBD',      color: 0x3a3a3a },
 ];
 
 export default class GameScene extends Phaser.Scene {
@@ -21,50 +35,51 @@ export default class GameScene extends Phaser.Scene {
     this.audio = new AudioManager();
     this.interaction = null;
     this.player = null;
+    this.platforms = null;
     this.cursors = null;
     this.wasd = null;
     this.interactKey = null;
     this.collectedUI = [];
+    this.canJump = false;
   }
 
   async create() {
-    this.cameras.main.setBounds(0, 0, WORLD_WIDTH, GAME_HEIGHT);
-    this.physics.world.setBounds(0, 0, WORLD_WIDTH, GAME_HEIGHT);
-
+    this._generateTextures();
     this._buildBackground();
+    this._buildPlatforms();
     this._buildPlayer();
     this._buildObjects();
     this._buildUI();
     this._buildInput();
 
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.events.on('stemUnlocked', this._onStemUnlocked, this);
 
-    // Init audio — gracefully skip if no audio files exist yet
     try {
       await this.audio.init();
     } catch (e) {
-      console.warn('AudioManager: no stems found, running silent.', e.message);
+      console.warn('AudioManager: running silent —', e.message);
     }
   }
 
   update() {
     if (!this.player) return;
 
+    const onGround = this.player.body.blocked.down;
     const left  = this.cursors.left.isDown  || this.wasd.left.isDown;
     const right = this.cursors.right.isDown || this.wasd.right.isDown;
-    const interactPressed =
-      Phaser.Input.Keyboard.JustDown(this.interactKey) ||
-      Phaser.Input.Keyboard.JustDown(this.cursors.space);
+    const jumpPressed  = Phaser.Input.Keyboard.JustDown(this.cursors.up)
+                      || Phaser.Input.Keyboard.JustDown(this.cursors.space)
+                      || Phaser.Input.Keyboard.JustDown(this.wasd.up);
+    const interactPressed = Phaser.Input.Keyboard.JustDown(this.interactKey);
 
-    this.player.setVelocityX(0);
+    // Horizontal movement
+    this.player.setVelocityX(left ? -PLAYER_SPEED : right ? PLAYER_SPEED : 0);
+    if (left)  this.player.setFlipX(true);
+    if (right) this.player.setFlipX(false);
 
-    if (left) {
-      this.player.setVelocityX(-PLAYER_SPEED);
-      this.player.setFlipX(true);
-    } else if (right) {
-      this.player.setVelocityX(PLAYER_SPEED);
-      this.player.setFlipX(false);
+    // Jump
+    if (jumpPressed && onGround) {
+      this.player.setVelocityY(JUMP_VELOCITY);
     }
 
     this.interaction.update(interactPressed);
@@ -72,107 +87,136 @@ export default class GameScene extends Phaser.Scene {
 
   // ---------------------------------------------------------------------------
 
-  _buildBackground() {
-    // Layered parallax rectangles — swap with tileSprite PNGs when art arrives
-    this.add.rectangle(WORLD_WIDTH / 2, GAME_HEIGHT / 2, WORLD_WIDTH, GAME_HEIGHT, 0x1a1408).setScrollFactor(0.05);
-    this.add.rectangle(WORLD_WIDTH / 2, 320, WORLD_WIDTH, 300, 0x1c2010).setScrollFactor(0.2);
-    this.add.rectangle(WORLD_WIDTH / 2, 390, WORLD_WIDTH, 200, 0x18200c).setScrollFactor(0.5);
-    this.add.rectangle(WORLD_WIDTH / 2, GROUND_Y + 70, WORLD_WIDTH, 140, 0x12160a).setScrollFactor(1.0);
-
-    // Ground line
-    this.add.rectangle(WORLD_WIDTH / 2, GROUND_Y, WORLD_WIDTH, 4, 0x2a3015).setScrollFactor(1.0);
-  }
-
-  _buildPlayer() {
-    // Generate a placeholder tomte texture if the real spritesheet isn't loaded
-    if (!this.textures.exists('tomte')) {
+  _generateTextures() {
+    // Cloaked Listener — long ears, closed eyes, flowing cape
+    if (!this.textures.exists('listener')) {
       const g = this.make.graphics({ add: false });
+      // Cape
+      g.fillStyle(0x2e3d22);
+      g.fillTriangle(6, 22, 26, 22, 20, 50);
       // Body
-      g.fillStyle(0x7a6a50);
-      g.fillRect(6, 16, 20, 28);
+      g.fillStyle(0x4a4535);
+      g.fillRoundedRect(9, 20, 14, 22, 4);
       // Head
-      g.fillStyle(0xc8a878);
-      g.fillRect(8, 6, 16, 14);
-      // Hat (red cap)
-      g.fillStyle(0x8a1a1a);
-      g.fillRect(6, 2, 20, 8);
-      g.generateTexture('tomte', 32, 48);
+      g.fillStyle(0x7a6e55);
+      g.fillCircle(16, 14, 9);
+      // Left ear
+      g.fillStyle(0x7a6e55);
+      g.fillTriangle(9, 10, 12, -6, 15, 10);
+      // Right ear
+      g.fillTriangle(17, 10, 20, -6, 23, 10);
+      // Closed eyes (two small lines)
+      g.fillStyle(0x2a2015);
+      g.fillRect(11, 13, 4, 2);
+      g.fillRect(17, 13, 4, 2);
+      g.generateTexture('listener', 32, 52);
       g.destroy();
     }
 
-    this.player = this.physics.add.sprite(200, GROUND_Y - 24, 'tomte');
-    this.player.setCollideWorldBounds(true);
-    this.player.setDepth(10);
-
-    // Animations — only if real spritesheet exists
-    if (this.textures.get('tomte').frameTotal > 1) {
-      this.anims.create({
-        key: 'idle',
-        frames: this.anims.generateFrameNumbers('tomte', { start: 0, end: 3 }),
-        frameRate: 4,
-        repeat: -1,
-      });
-      this.anims.create({
-        key: 'walk',
-        frames: this.anims.generateFrameNumbers('tomte', { start: 4, end: 11 }),
-        frameRate: 8,
-        repeat: -1,
-      });
+    // Particle dot for VFX
+    if (!this.textures.exists('particle')) {
+      const g = this.make.graphics({ add: false });
+      g.fillStyle(0xffffff);
+      g.fillCircle(4, 4, 4);
+      g.generateTexture('particle', 8, 8);
+      g.destroy();
     }
+  }
+
+  _buildBackground() {
+    // Sky gradient layers — replace with illustrated PNG when art arrives
+    this.add.rectangle(W / 2, H / 2, W, H, 0x0e0f0a);
+    this.add.rectangle(W / 2, 380,   W, 280, 0x121508);
+    this.add.rectangle(W / 2, 470,   W, 120, 0x0e1206);
+
+    // Atmospheric fog bands
+    const fog1 = this.add.rectangle(W / 2, 200, W, 80, 0x1a2010).setAlpha(0.3);
+    const fog2 = this.add.rectangle(W / 2, 320, W, 60, 0x1a2010).setAlpha(0.2);
+
+    // Subtle tree silhouettes (placeholder vertical rects)
+    const treeData = [60, 180, 340, 500, 650, 780, 900];
+    treeData.forEach((tx) => {
+      const h = Phaser.Math.Between(200, 340);
+      this.add.rectangle(tx, GROUND_Y - h / 2, Phaser.Math.Between(18, 30), h, 0x0a0e06).setAlpha(0.7);
+    });
+  }
+
+  _buildPlatforms() {
+    this.platforms = this.physics.add.staticGroup();
+
+    PLATFORMS.forEach(({ x, y, w }, i) => {
+      const thickness = i === 0 ? 60 : 16;
+      const plat = this.add.rectangle(x, y + thickness / 2, w, thickness, 0x1e2a10)
+        .setStrokeStyle(1, 0x3a4a18);
+      this.physics.add.existing(plat, true);
+      this.platforms.add(plat);
+
+      // Mossy top accent
+      this.add.rectangle(x, y, w, 4, 0x2a4a14);
+    });
+  }
+
+  _buildPlayer() {
+    const startX = 60;
+    const startY = GROUND_Y - 26;
+
+    this.player = this.physics.add.sprite(startX, startY, 'listener');
+    this.player.setCollideWorldBounds(true);
+    this.player.setDepth(20);
+    this.player.body.setSize(18, 40);
+    this.player.body.setOffset(7, 12);
+
+    this.physics.add.collider(this.player, this.platforms);
   }
 
   _buildObjects() {
     this.interaction = new InteractionSystem(this, this.audio);
     this.interaction.setPlayer(this.player);
 
-    ZONES.forEach(({ key, x, stemIndex, label, color }) => {
-      // Placeholder shape — replace with spritesheet when art arrives
-      const sprite = this.add.rectangle(x, GROUND_Y - 30, 44, 60, color)
-        .setStrokeStyle(2, 0xffffff, 0.15)
-        .setDepth(5);
+    OBJECTS.forEach(({ platformIdx, stemIndex, key, label, color }) => {
+      const plat = PLATFORMS[platformIdx];
+      const ox = plat.x + Phaser.Math.Between(-20, 20);
+      const oy = plat.y - 28;
 
-      // Zone label (dev only — remove when real art is in)
-      this.add.text(x, GROUND_Y - 70, label, {
-        fontSize: '11px',
-        color: '#a09060',
-        alpha: 0.6,
-      }).setOrigin(0.5).setDepth(20);
+      // Dormant object — dim placeholder shape
+      const sprite = this.add.rectangle(ox, oy, 38, 38, color)
+        .setAlpha(0.5)
+        .setStrokeStyle(1, 0xffffff, 0.1)
+        .setDepth(15);
+
+      // Label (dev only)
+      this.add.text(ox, oy - 30, label, {
+        fontSize: '10px', color: '#6a5a3a',
+      }).setOrigin(0.5).setDepth(25);
 
       this.interaction.register(sprite, stemIndex, key);
     });
 
-    // Interaction prompt
-    const prompt = this.add.text(480, 460, '[E] or click to interact', {
-      fontSize: '13px',
-      color: '#d4c090',
-    }).setScrollFactor(0).setOrigin(0.5).setVisible(false).setDepth(30);
+    // Prompt
+    const prompt = this.add.text(W / 2, H - 30, '[E] wake it', {
+      fontSize: '13px', color: '#c8a850', alpha: 0.9,
+    }).setOrigin(0.5).setScrollFactor(0).setVisible(false).setDepth(40);
 
     this.interaction.setPrompt(prompt);
-
-    this.input.on('pointerdown', (pointer) => {
-      this.interaction.tryClickInteract(pointer.worldX, pointer.worldY);
-    });
   }
 
   _buildUI() {
-    const slotY = 518;
-    const startX = 480 - 2 * 44;
+    const slotY = H - 16;
+    const startX = W / 2 - 2 * 44;
 
     for (let i = 0; i < 5; i++) {
-      this.add.rectangle(startX + i * 44, slotY, 36, 26, 0x0a0c06)
-        .setScrollFactor(0).setStrokeStyle(1, 0x4a3a1a).setDepth(30);
+      this.add.rectangle(startX + i * 44, slotY, 36, 20, 0x080c04)
+        .setScrollFactor(0).setStrokeStyle(1, 0x3a2a0e).setDepth(40);
 
-      const icon = this.add.rectangle(startX + i * 44, slotY, 28, 18, 0x2a2010)
-        .setScrollFactor(0).setAlpha(0).setDepth(31);
+      const fill = this.add.rectangle(startX + i * 44, slotY, 28, 12, 0x6a4a18)
+        .setScrollFactor(0).setAlpha(0).setDepth(41);
 
-      this.collectedUI.push(icon);
+      this.collectedUI.push(fill);
     }
 
-    // Stem counter
-    this.stemText = this.add.text(16, 510, '0 / 5', {
-      fontSize: '13px',
-      color: '#5a4a2a',
-    }).setScrollFactor(0).setDepth(30);
+    this.stemText = this.add.text(14, H - 22, '0 / 5', {
+      fontSize: '11px', color: '#4a3a18',
+    }).setScrollFactor(0).setDepth(40);
   }
 
   _buildInput() {
@@ -180,28 +224,76 @@ export default class GameScene extends Phaser.Scene {
     this.wasd = this.input.keyboard.addKeys({
       left:  Phaser.Input.Keyboard.KeyCodes.A,
       right: Phaser.Input.Keyboard.KeyCodes.D,
+      up:    Phaser.Input.Keyboard.KeyCodes.W,
     });
     this.interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
   }
 
   _onStemUnlocked(stemIndex) {
-    // Light up UI slot
+    // Brighten UI slot
     if (this.collectedUI[stemIndex]) {
-      this.collectedUI[stemIndex].setFillStyle(0x8a6a30).setAlpha(1);
+      this.collectedUI[stemIndex].setAlpha(1);
     }
     this.stemText?.setText(`${this.audio.stemCount()} / 5`);
 
+    // Find the object sprite to run VFX on
+    const obj = this.interaction.objects.find(o => o.stemIndex === stemIndex);
+    if (obj) this._playWakeVFX(obj.sprite, stemIndex);
+  }
+
+  _playWakeVFX(sprite, stemIndex) {
+    // Brighten the object
+    this.tweens.add({
+      targets: sprite,
+      alpha: 1,
+      duration: 400,
+      ease: 'Sine.easeOut',
+    });
+
+    // Expanding ring
+    const ring = this.add.circle(sprite.x, sprite.y, 10, 0xd4c080, 0)
+      .setStrokeStyle(2, 0xd4c080, 0.8).setDepth(30);
+
+    this.tweens.add({
+      targets: ring,
+      scaleX: 4, scaleY: 4,
+      alpha: 0,
+      duration: 700,
+      ease: 'Sine.easeOut',
+      onComplete: () => ring.destroy(),
+    });
+
+    // Particle burst
+    const colours = [0xd4c080, 0x8aba50, 0xffffff, 0xa0c860];
+    for (let i = 0; i < 10; i++) {
+      const dot = this.add.circle(
+        sprite.x + Phaser.Math.Between(-8, 8),
+        sprite.y + Phaser.Math.Between(-8, 8),
+        Phaser.Math.Between(2, 5),
+        Phaser.Utils.Array.GetRandom(colours)
+      ).setDepth(30);
+
+      this.tweens.add({
+        targets: dot,
+        x: dot.x + Phaser.Math.Between(-40, 40),
+        y: dot.y + Phaser.Math.Between(-50, -10),
+        alpha: 0,
+        duration: Phaser.Math.Between(500, 900),
+        ease: 'Sine.easeOut',
+        onComplete: () => dot.destroy(),
+      });
+    }
+
     // Floating note
-    const note = this.add.text(this.player.x, this.player.y - 50, '♪', {
-      fontSize: '22px',
-      color: '#d4c090',
-    }).setDepth(50);
+    const note = this.add.text(sprite.x, sprite.y - 30, '♪', {
+      fontSize: '20px', color: '#d4c080',
+    }).setOrigin(0.5).setDepth(35);
 
     this.tweens.add({
       targets: note,
-      y: note.y - 60,
+      y: note.y - 50,
       alpha: 0,
-      duration: 1500,
+      duration: 1200,
       ease: 'Sine.easeOut',
       onComplete: () => note.destroy(),
     });
