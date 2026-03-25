@@ -2,18 +2,17 @@ import Phaser from 'phaser';
 import AudioManager from '../systems/AudioManager.js';
 import InteractionSystem from '../systems/InteractionSystem.js';
 
-const WORLD_WIDTH = 4800;  // wide horizontal scene
+const WORLD_WIDTH = 4800;
 const GAME_HEIGHT = 540;
 const PLAYER_SPEED = 160;
-const GROUND_Y = 420;      // y-position of the ground plane
+const GROUND_Y = 400;
 
-// Zone definitions — x positions in world space
 const ZONES = [
-  { key: 'stone',   x: 600,  stemIndex: 0, label: 'Forest Entrance' },
-  { key: 'troll',   x: 1400, stemIndex: 1, label: 'Root Hollow'     },
-  { key: 'lily',    x: 2400, stemIndex: 2, label: 'Pond'            },
-  { key: 'lantern', x: 3200, stemIndex: 3, label: 'Tall Oak'        },
-  { key: 'owl',     x: 4200, stemIndex: 4, label: 'Deep Clearing'   },
+  { key: 'stone',   x: 600,  stemIndex: 0, label: 'Forest Entrance', color: 0x6a5a3a },
+  { key: 'troll',   x: 1400, stemIndex: 1, label: 'Root Hollow',     color: 0x3a5a2a },
+  { key: 'lily',    x: 2400, stemIndex: 2, label: 'Pond',            color: 0x2a4a5a },
+  { key: 'lantern', x: 3200, stemIndex: 3, label: 'Tall Oak',        color: 0x5a4a1a },
+  { key: 'owl',     x: 4200, stemIndex: 4, label: 'Deep Clearing',   color: 0x4a2a5a },
 ];
 
 export default class GameScene extends Phaser.Scene {
@@ -29,10 +28,6 @@ export default class GameScene extends Phaser.Scene {
   }
 
   async create() {
-    // Resume AudioContext on first user gesture — this scene starts after
-    // the start screen interaction, so we can safely init audio here.
-    await this.audio.init();
-
     this.cameras.main.setBounds(0, 0, WORLD_WIDTH, GAME_HEIGHT);
     this.physics.world.setBounds(0, 0, WORLD_WIDTH, GAME_HEIGHT);
 
@@ -43,9 +38,14 @@ export default class GameScene extends Phaser.Scene {
     this._buildInput();
 
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-
-    // Listen for stem unlock events (for UI update, particles, etc.)
     this.events.on('stemUnlocked', this._onStemUnlocked, this);
+
+    // Init audio — gracefully skip if no audio files exist yet
+    try {
+      await this.audio.init();
+    } catch (e) {
+      console.warn('AudioManager: no stems found, running silent.', e.message);
+    }
   }
 
   update() {
@@ -62,69 +62,50 @@ export default class GameScene extends Phaser.Scene {
     if (left) {
       this.player.setVelocityX(-PLAYER_SPEED);
       this.player.setFlipX(true);
-      if (this.player.anims.currentAnim?.key !== 'walk') {
-        this.player.play('walk', true);
-      }
     } else if (right) {
       this.player.setVelocityX(PLAYER_SPEED);
       this.player.setFlipX(false);
-      if (this.player.anims.currentAnim?.key !== 'walk') {
-        this.player.play('walk', true);
-      }
-    } else {
-      if (this.player.anims.currentAnim?.key !== 'idle') {
-        this.player.play('idle', true);
-      }
     }
 
     this.interaction.update(interactPressed);
   }
 
-  // -------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   _buildBackground() {
-    // Placeholder coloured rectangles until art assets arrive.
-    // Replace each add.rectangle with add.tileSprite using the real PNG.
+    // Layered parallax rectangles — swap with tileSprite PNGs when art arrives
+    this.add.rectangle(WORLD_WIDTH / 2, GAME_HEIGHT / 2, WORLD_WIDTH, GAME_HEIGHT, 0x1a1408).setScrollFactor(0.05);
+    this.add.rectangle(WORLD_WIDTH / 2, 320, WORLD_WIDTH, 300, 0x1c2010).setScrollFactor(0.2);
+    this.add.rectangle(WORLD_WIDTH / 2, 390, WORLD_WIDTH, 200, 0x18200c).setScrollFactor(0.5);
+    this.add.rectangle(WORLD_WIDTH / 2, GROUND_Y + 70, WORLD_WIDTH, 140, 0x12160a).setScrollFactor(1.0);
 
-    // Sky
-    this.add.rectangle(WORLD_WIDTH / 2, GAME_HEIGHT / 2, WORLD_WIDTH, GAME_HEIGHT, 0x1a1408)
-      .setScrollFactor(0.1);
-
-    // Distant trees silhouette
-    this.add.rectangle(WORLD_WIDTH / 2, 300, WORLD_WIDTH, 200, 0x1e2410)
-      .setScrollFactor(0.3);
-
-    // Mid-ground trees
-    this.add.rectangle(WORLD_WIDTH / 2, 370, WORLD_WIDTH, 160, 0x1a2008)
-      .setScrollFactor(0.6);
-
-    // Ground
-    this.add.rectangle(WORLD_WIDTH / 2, GROUND_Y + 60, WORLD_WIDTH, 120, 0x12180a)
-      .setScrollFactor(1.0);
+    // Ground line
+    this.add.rectangle(WORLD_WIDTH / 2, GROUND_Y, WORLD_WIDTH, 4, 0x2a3015).setScrollFactor(1.0);
   }
 
   _buildPlayer() {
-    // Placeholder rectangle until Tomte sprite sheet arrives
-    this.player = this.physics.add.sprite(200, GROUND_Y, 'tomte');
-    this.player.setCollideWorldBounds(true);
-
-    // Placeholder: use a plain rectangle if sprite not yet loaded
+    // Generate a placeholder tomte texture if the real spritesheet isn't loaded
     if (!this.textures.exists('tomte')) {
-      const g = this.add.graphics();
-      g.fillStyle(0xc8a060);
-      g.fillRect(-12, -28, 24, 56);
-      const rt = this.add.renderTexture(0, 0, 24, 56);
-      rt.draw(g, 0, 0);
-      rt.saveTexture('tomte-placeholder');
+      const g = this.make.graphics({ add: false });
+      // Body
+      g.fillStyle(0x7a6a50);
+      g.fillRect(6, 16, 20, 28);
+      // Head
+      g.fillStyle(0xc8a878);
+      g.fillRect(8, 6, 16, 14);
+      // Hat (red cap)
+      g.fillStyle(0x8a1a1a);
+      g.fillRect(6, 2, 20, 8);
+      g.generateTexture('tomte', 32, 48);
       g.destroy();
-
-      this.player = this.physics.add.sprite(200, GROUND_Y, 'tomte-placeholder');
     }
 
+    this.player = this.physics.add.sprite(200, GROUND_Y - 24, 'tomte');
     this.player.setCollideWorldBounds(true);
+    this.player.setDepth(10);
 
-    // Animations — define only if spritesheet is loaded
-    if (this.textures.exists('tomte')) {
+    // Animations — only if real spritesheet exists
+    if (this.textures.get('tomte').frameTotal > 1) {
       this.anims.create({
         key: 'idle',
         frames: this.anims.generateFrameNumbers('tomte', { start: 0, end: 3 }),
@@ -137,12 +118,6 @@ export default class GameScene extends Phaser.Scene {
         frameRate: 8,
         repeat: -1,
       });
-      this.anims.create({
-        key: 'interact',
-        frames: this.anims.generateFrameNumbers('tomte', { start: 12, end: 15 }),
-        frameRate: 6,
-        repeat: 0,
-      });
     }
   }
 
@@ -150,59 +125,54 @@ export default class GameScene extends Phaser.Scene {
     this.interaction = new InteractionSystem(this, this.audio);
     this.interaction.setPlayer(this.player);
 
-    ZONES.forEach(({ key, x, stemIndex }) => {
-      // Placeholder rectangle until object sprites arrive
-      let sprite;
-      if (this.textures.exists(key)) {
-        sprite = this.add.sprite(x, GROUND_Y - 20, key);
-      } else {
-        const g = this.add.graphics();
-        g.fillStyle(0x4a6030);
-        g.fillCircle(24, 24, 24);
-        sprite = this.add.graphics();
-        sprite.fillStyle(0x4a6030);
-        sprite.fillCircle(0, 0, 20);
-        sprite.x = x;
-        sprite.y = GROUND_Y - 20;
-        // Give graphics object a position so InteractionSystem can read it
-      }
+    ZONES.forEach(({ key, x, stemIndex, label, color }) => {
+      // Placeholder shape — replace with spritesheet when art arrives
+      const sprite = this.add.rectangle(x, GROUND_Y - 30, 44, 60, color)
+        .setStrokeStyle(2, 0xffffff, 0.15)
+        .setDepth(5);
+
+      // Zone label (dev only — remove when real art is in)
+      this.add.text(x, GROUND_Y - 70, label, {
+        fontSize: '11px',
+        color: '#a09060',
+        alpha: 0.6,
+      }).setOrigin(0.5).setDepth(20);
 
       this.interaction.register(sprite, stemIndex, key);
     });
 
-    // Interaction prompt text
-    const prompt = this.add.text(0, 0, '[E] Interact', {
-      fontSize: '14px',
+    // Interaction prompt
+    const prompt = this.add.text(480, 460, '[E] or click to interact', {
+      fontSize: '13px',
       color: '#d4c090',
-      alpha: 0.85,
-    }).setScrollFactor(0).setVisible(false).setPosition(420, 480);
+    }).setScrollFactor(0).setOrigin(0.5).setVisible(false).setDepth(30);
 
     this.interaction.setPrompt(prompt);
 
-    // Pointer click to interact
     this.input.on('pointerdown', (pointer) => {
-      const worldX = pointer.worldX;
-      const worldY = pointer.worldY;
-      this.interaction.tryClickInteract(worldX, worldY);
+      this.interaction.tryClickInteract(pointer.worldX, pointer.worldY);
     });
   }
 
   _buildUI() {
-    // Collection tray — 5 slots at bottom of screen (fixed to camera)
-    const slotY = 510;
-    const startX = 960 / 2 - 2 * 44;
+    const slotY = 518;
+    const startX = 480 - 2 * 44;
 
     for (let i = 0; i < 5; i++) {
-      const slot = this.add.rectangle(startX + i * 44, slotY, 36, 36, 0x1a1408)
-        .setScrollFactor(0)
-        .setStrokeStyle(1, 0x5a4a2a);
+      this.add.rectangle(startX + i * 44, slotY, 36, 26, 0x0a0c06)
+        .setScrollFactor(0).setStrokeStyle(1, 0x4a3a1a).setDepth(30);
 
-      const icon = this.add.rectangle(startX + i * 44, slotY, 28, 28, 0x2a2010)
-        .setScrollFactor(0)
-        .setAlpha(0);
+      const icon = this.add.rectangle(startX + i * 44, slotY, 28, 18, 0x2a2010)
+        .setScrollFactor(0).setAlpha(0).setDepth(31);
 
       this.collectedUI.push(icon);
     }
+
+    // Stem counter
+    this.stemText = this.add.text(16, 510, '0 / 5', {
+      fontSize: '13px',
+      color: '#5a4a2a',
+    }).setScrollFactor(0).setDepth(30);
   }
 
   _buildInput() {
@@ -215,26 +185,25 @@ export default class GameScene extends Phaser.Scene {
   }
 
   _onStemUnlocked(stemIndex) {
-    // Light up the UI slot
+    // Light up UI slot
     if (this.collectedUI[stemIndex]) {
-      this.collectedUI[stemIndex].setAlpha(1).setFillStyle(0x8a6a30);
+      this.collectedUI[stemIndex].setFillStyle(0x8a6a30).setAlpha(1);
     }
+    this.stemText?.setText(`${this.audio.stemCount()} / 5`);
 
-    // Floating note particles — placeholder tween until particle atlas is ready
-    const cam = this.cameras.main;
-    const text = this.add.text(
-      this.player.x,
-      this.player.y - 40,
-      '♪',
-      { fontSize: '24px', color: '#d4c090' }
-    );
+    // Floating note
+    const note = this.add.text(this.player.x, this.player.y - 50, '♪', {
+      fontSize: '22px',
+      color: '#d4c090',
+    }).setDepth(50);
+
     this.tweens.add({
-      targets: text,
-      y: text.y - 60,
+      targets: note,
+      y: note.y - 60,
       alpha: 0,
       duration: 1500,
       ease: 'Sine.easeOut',
-      onComplete: () => text.destroy(),
+      onComplete: () => note.destroy(),
     });
   }
 }
