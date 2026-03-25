@@ -6,8 +6,14 @@ const W = 960;
 const H = 540;
 const GROUND_Y = 490;
 const PLAYER_SPEED = 160;
-const JUMP_VELOCITY = -520;
+const JUMP_VELOCITY = -420;
 const INTERACT_DIST = 70;
+
+// Movement feel
+const GROUND_ACCEL    = 0.22;  // how fast speed builds when key held on ground
+const GROUND_FRICTION = 0.07;  // how fast character slows when no key on ground (low = slippery)
+const AIR_ACCEL       = 0.07;  // very limited steering mid-air
+const JUMP_CUT        = 0.01;  // multiply upward velocity by this on early key release (lower = shorter hop)
 
 // Platform layout: { x, y, w } — y is top surface
 // Jump height with v=-520, g=800 → ~169px max
@@ -71,16 +77,36 @@ export default class GameScene extends Phaser.Scene {
     const jumpPressed  = Phaser.Input.Keyboard.JustDown(this.cursors.up)
                       || Phaser.Input.Keyboard.JustDown(this.cursors.space)
                       || Phaser.Input.Keyboard.JustDown(this.wasd.up);
+    const jumpHeld     = this.cursors.up.isDown || this.cursors.space.isDown || this.wasd.up.isDown;
     const interactPressed = Phaser.Input.Keyboard.JustDown(this.interactKey);
 
-    // Horizontal movement
-    this.player.setVelocityX(left ? -PLAYER_SPEED : right ? PLAYER_SPEED : 0);
+    // Horizontal movement — momentum-based
+    const targetVx = left ? -PLAYER_SPEED : right ? PLAYER_SPEED : 0;
+    const currentVx = this.player.body.velocity.x;
+    let lerpFactor;
+    if (!onGround) {
+      lerpFactor = AIR_ACCEL;                                     // low air control
+    } else if (targetVx === 0) {
+      lerpFactor = GROUND_FRICTION;                               // slippery slide to stop
+    } else {
+      lerpFactor = GROUND_ACCEL;                                  // responsive ground accel
+    }
+    this.player.setVelocityX(Phaser.Math.Linear(currentVx, targetVx, lerpFactor));
     if (left)  this.player.setFlipX(true);
     if (right) this.player.setFlipX(false);
 
-    // Jump
+    // Jump — variable height
     if (jumpPressed && onGround) {
       this.player.setVelocityY(JUMP_VELOCITY);
+      this._jumping = true;
+    } else if (onGround) {
+      this._jumping = false;
+    }
+
+    // Cut the jump short when key is released early
+    if (this._jumping && !jumpHeld && this.player.body.velocity.y < 0) {
+      this.player.setVelocityY(this.player.body.velocity.y * JUMP_CUT);
+      this._jumping = false;
     }
 
     // Animations
