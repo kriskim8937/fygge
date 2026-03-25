@@ -85,6 +85,19 @@ When the player wakes a sleeping creature:
 6. **Creature settles into calm awakened idle** — subtle loop animation, remains present
 7. **UI slot fills** — illustrated frame at bottom, 1 of 5
 
+### Visual Effects — Implemented
+
+**Parallax background**
+The background image is scaled to 112% of canvas width so there are extra pixels on both sides. As the player moves left/right, the background drifts in the opposite direction at 60% of the player's relative screen position. This creates a sense of depth without any camera scrolling.
+- Extra scale: ×1.12 → ~115px of horizontal travel available
+- Parallax factor: 0.6 (background moves slower than player)
+- Driven per-frame in `update()` via `GameScene._bg.x`
+
+**Camera shake on stem unlock**
+Each stem unlock triggers a brief camera shake (350ms). Intensity starts very subtle and increases slightly with each successive stem found, so the final unlock has the most physical weight. The overscaled background ensures no black bars appear at screen edges during the shake.
+- Base intensity: 0.002 — final stem: ~0.006
+- Implemented via `this.cameras.main.shake(350, intensity)`
+
 ---
 
 ## Audio Design

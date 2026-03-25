@@ -83,6 +83,13 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.interaction.update(interactPressed);
+
+    // Parallax — background drifts opposite to player position
+    if (this._bg) {
+      const t = (this.player.x / W) - 0.5;           // -0.5 … +0.5
+      const extra = this._bg.displayWidth - W;        // pixels available to shift
+      this._bg.x = W / 2 - t * extra * 0.6;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -124,21 +131,10 @@ export default class GameScene extends Phaser.Scene {
   }
 
   _buildBackground() {
-    // Sky gradient layers — replace with illustrated PNG when art arrives
-    this.add.rectangle(W / 2, H / 2, W, H, 0x0e0f0a);
-    this.add.rectangle(W / 2, 380,   W, 280, 0x121508);
-    this.add.rectangle(W / 2, 470,   W, 120, 0x0e1206);
-
-    // Atmospheric fog bands
-    const fog1 = this.add.rectangle(W / 2, 200, W, 80, 0x1a2010).setAlpha(0.3);
-    const fog2 = this.add.rectangle(W / 2, 320, W, 60, 0x1a2010).setAlpha(0.2);
-
-    // Subtle tree silhouettes (placeholder vertical rects)
-    const treeData = [60, 180, 340, 500, 650, 780, 900];
-    treeData.forEach((tx) => {
-      const h = Phaser.Math.Between(200, 340);
-      this.add.rectangle(tx, GROUND_Y - h / 2, Phaser.Math.Between(18, 30), h, 0x0a0e06).setAlpha(0.7);
-    });
+    const bg = this.add.image(W / 2, H / 2, 'background').setDepth(0);
+    // Scale to width then add 12% extra so there's room to drift for parallax
+    bg.setScale((W / bg.width) * 1.12);
+    this._bg = bg;
   }
 
   _buildPlatforms() {
@@ -235,6 +231,10 @@ export default class GameScene extends Phaser.Scene {
       this.collectedUI[stemIndex].setAlpha(1);
     }
     this.stemText?.setText(`${this.audio.stemCount()} / 5`);
+
+    // Subtle camera shake — intensity grows with each stem found
+    const intensity = 0.002 + stemIndex * 0.0008;
+    this.cameras.main.shake(350, intensity);
 
     // Find the object sprite to run VFX on
     const obj = this.interaction.objects.find(o => o.stemIndex === stemIndex);

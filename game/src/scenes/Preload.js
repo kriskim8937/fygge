@@ -14,7 +14,10 @@ export default class Preload extends Phaser.Scene {
       bar.width = 400 * value;
     });
 
-    // Backgrounds (parallax layers)
+    // Background
+    this.load.image('background', 'assets/backgrounds/background.jpeg');
+
+    // Parallax layers (uncomment when split layers are delivered)
     // this.load.image('bg-sky', 'assets/backgrounds/bg-sky.png');
     // this.load.image('bg-trees-far', 'assets/backgrounds/bg-trees-far.png');
     // this.load.image('bg-trees-mid', 'assets/backgrounds/bg-trees-mid.png');
