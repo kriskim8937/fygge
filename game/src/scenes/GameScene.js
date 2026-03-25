@@ -45,6 +45,7 @@ export default class GameScene extends Phaser.Scene {
 
   async create() {
     this._generateTextures();
+    this._buildAnims();
     this._buildBackground();
     this._buildPlatforms();
     this._buildPlayer();
@@ -82,6 +83,15 @@ export default class GameScene extends Phaser.Scene {
       this.player.setVelocityY(JUMP_VELOCITY);
     }
 
+    // Animations
+    if (!onGround) {
+      this.player.play('wind-idle', true);
+    } else if (left || right) {
+      this.player.play('walk', true);
+    } else {
+      this.player.play('idle', true);
+    }
+
     this.interaction.update(interactPressed);
 
     // Parallax — background drifts opposite to player position
@@ -95,31 +105,6 @@ export default class GameScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   _generateTextures() {
-    // Cloaked Listener — long ears, closed eyes, flowing cape
-    if (!this.textures.exists('listener')) {
-      const g = this.make.graphics({ add: false });
-      // Cape
-      g.fillStyle(0x2e3d22);
-      g.fillTriangle(6, 22, 26, 22, 20, 50);
-      // Body
-      g.fillStyle(0x4a4535);
-      g.fillRoundedRect(9, 20, 14, 22, 4);
-      // Head
-      g.fillStyle(0x7a6e55);
-      g.fillCircle(16, 14, 9);
-      // Left ear
-      g.fillStyle(0x7a6e55);
-      g.fillTriangle(9, 10, 12, -6, 15, 10);
-      // Right ear
-      g.fillTriangle(17, 10, 20, -6, 23, 10);
-      // Closed eyes (two small lines)
-      g.fillStyle(0x2a2015);
-      g.fillRect(11, 13, 4, 2);
-      g.fillRect(17, 13, 4, 2);
-      g.generateTexture('listener', 32, 52);
-      g.destroy();
-    }
-
     // Particle dot for VFX
     if (!this.textures.exists('particle')) {
       const g = this.make.graphics({ add: false });
@@ -128,6 +113,27 @@ export default class GameScene extends Phaser.Scene {
       g.generateTexture('particle', 8, 8);
       g.destroy();
     }
+  }
+
+  _buildAnims() {
+    this.anims.create({
+      key: 'idle',
+      frames: this.anims.generateFrameNumbers('char-idle', { start: 0, end: 2 }),
+      frameRate: 1000 / 150,   // matches Aseprite 150ms per frame
+      repeat: -1,
+    });
+    this.anims.create({
+      key: 'walk',
+      frames: this.anims.generateFrameNumbers('char-walk', { start: 0, end: 4 }),
+      frameRate: 1000 / 100,   // 100ms per frame
+      repeat: -1,
+    });
+    this.anims.create({
+      key: 'wind-idle',
+      frames: this.anims.generateFrameNumbers('char-wind-idle', { start: 0, end: 6 }),
+      frameRate: 1000 / 100,
+      repeat: -1,
+    });
   }
 
   _buildBackground() {
@@ -154,13 +160,15 @@ export default class GameScene extends Phaser.Scene {
 
   _buildPlayer() {
     const startX = 60;
-    const startY = GROUND_Y - 26;
+    const startY = GROUND_Y - 32;   // 64px sprite, feet near bottom
 
-    this.player = this.physics.add.sprite(startX, startY, 'listener');
+    this.player = this.physics.add.sprite(startX, startY, 'char-idle');
     this.player.setCollideWorldBounds(true);
     this.player.setDepth(20);
-    this.player.body.setSize(18, 40);
-    this.player.body.setOffset(7, 12);
+    // Physics body narrower than the 64px frame — centered horizontally, feet at frame bottom
+    this.player.body.setSize(22, 48);
+    this.player.body.setOffset(21, 14);
+    this.player.play('idle');
 
     this.physics.add.collider(this.player, this.platforms);
   }

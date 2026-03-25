@@ -23,11 +23,10 @@ export default class Preload extends Phaser.Scene {
     // this.load.image('bg-trees-mid', 'assets/backgrounds/bg-trees-mid.png');
     // this.load.image('bg-ground', 'assets/backgrounds/bg-ground.png');
 
-    // Character sprite sheet
-    // this.load.spritesheet('tomte', 'assets/sprites/tomte.png', {
-    //   frameWidth: 48,
-    //   frameHeight: 64,
-    // });
+    // Character spritesheets — 64×64px frames
+    this.load.spritesheet('char-idle',      'assets/sprites/character/idle_sheet.png',      { frameWidth: 64, frameHeight: 64 });
+    this.load.spritesheet('char-walk',      'assets/sprites/character/walk_sheet.png',      { frameWidth: 64, frameHeight: 64 });
+    this.load.spritesheet('char-wind-idle', 'assets/sprites/character/wind_idle_sheet.png', { frameWidth: 64, frameHeight: 64 });
 
     // Interactive objects
     // this.load.spritesheet('stone',   'assets/sprites/stone.png',   { frameWidth: 64, frameHeight: 64 });
