@@ -32,7 +32,7 @@ All assets must honour this aesthetic. No sharp vector edges, no bright palette,
 A fictional forest animal with long rabbit-like ears, permanently closed eyes, and a flowing cape. No confirmed species — deliberately ambiguous, somewhere between hare, spirit, and forest creature.
 
 **Design notes for the graphic designer:**
-- Long ears, slightly drooped — expressive without needing a face
+- Long ears — expressive without needing a face
 - Eyes always closed — navigates by sound, which ties directly to the music mechanic
 - Cape / cloak: muted tone (dark moss green, charcoal, or deep ochre) — drapes naturally, moves with jumps
 - Small, low silhouette — feels humble against the vast forest backdrop
@@ -49,39 +49,41 @@ The closed eyes make the character a perfect vessel for an audio-first game — 
 ### Core Loop
 ```
 Player spawns at ground level → moves and jumps across platforms →
-reaches an object → presses interact key → VFX burst plays →
-sound effect triggers → new music stem fades in →
-collect all 5 → full composition plays → gentle end screen
+reaches a sleeping creature → presses interact key →
+creature wakes → VFX burst + SFX → new music stem fades in →
+wake all 5 → full composition plays → forest is alive → gentle end screen
 ```
 
 ### Scene Structure
-One **static, single-screen platformer** — the full scene is visible at all times, no camera scrolling. Platforms are integrated into the illustrated background (roots, rocks, branches, stone ledges). Each platform holds one interactable object.
+One **static, single-screen platformer** — the full scene is visible at all times, no camera scrolling. Platforms are integrated into the illustrated background (roots, rocks, branches, stone ledges). Each platform holds one sleeping creature or dormant object. **Everything in the forest starts asleep. The character wakes it up.**
 
-| Platform | Object | Position | Music Stem |
-|----------|--------|----------|------------|
-| Ground level, left | Ancient mossy stone with runes | Low, accessible | Bass drone / low strings |
-| Large root arch | Sleeping troll curled under a root | Mid height, left | Cello melody |
-| Pond lily pad / rock | Water lily with a resting frog | Mid height, centre | Woodwind motif (flute/oboe) |
-| Tree branch | Glowing lantern hanging from a branch | High, right | Harp / plucked strings |
-| Raised rocky clearing | Owl perched on a skull-shaped rock | High, far right | Full choir / final resolution |
+| # | Platform | Object | Dormant State | Awakened State | VFX | SFX | Music Stem |
+|---|----------|--------|--------------|----------------|-----|-----|------------|
+| 1 | Ground level, left | **Frog** | Still, eyes closed, hunched | Eyes open, throat inflates, croak pose | Ripple rings, water droplet particles | Tuned croak | Bass drone / low strings |
+| 2 | TBD | **TBD** | TBD | TBD | TBD | TBD | Cello melody |
+| 3 | Mossy boulder, mid | **Mushroom** | Dim, no glow | Glows softly, pulses | Light rings radiate from cap | Soft tuned hum | Woodwind motif (flute/oboe) |
+| 4 | TBD | **TBD** | TBD | TBD | TBD | TBD | Harp / plucked strings |
+| 5 | TBD | **TBD** | TBD | TBD | TBD | TBD | Full choir / final resolution |
 
-*5 platforms = 5 objects = 5 stems. Final stem completes the piece.*
+*5 platforms = 5 sleeping creatures = 5 stems. Final stem completes the piece.*
+
+**Design principle:** Every creature returns to a calm idle after waking — not frantic, not performing. They simply become *present*. The forest fills with quiet life rather than spectacle.
 
 ### Controls
 - **Arrow keys / WASD** — move left / right
-- **Spacebar** — jump (single jump; double jump TBD)
-- **E or Spacebar near object** — interact
+- **Spacebar** — jump (single jump)
+- **E near object** — interact
 - No combat, no fail state, no timer — purely exploratory platforming
 
 ### Interaction Feedback
-When the player interacts with an object:
-1. **VFX burst on the object** — particle splash, light bloom, shimmer ring, or glow pulse (style per object)
-2. **Object animation** — wakes, glows, opens eyes, flickers on
-3. **Character reaction** — small bow or look-up animation (2–3 frames)
-4. **Sound effect** — short tuned tone (1–3 sec) bridging interact to stem fade-in
-5. **Music stem crossfades in** — always additive, stems never drop out
-6. **Object settles into activated idle state** — remains glowing/alive
-7. **UI indicator** — small illustrated frame at bottom fills in (1 of 5 slots)
+When the player wakes a sleeping creature:
+1. **Character reaction** — ears perk up, slight head tilt (1–2 frames, instant)
+2. **Wake animation** — creature stirs from dormant pose into awakened state (4–8 frames, per creature)
+3. **VFX burst** — unique per creature (ripples, dust, light rings, wing-dust, eye-flash) — peaks then settles
+4. **SFX plays** — 1–3 seconds, tuned to key, bridges the moment to the music
+5. **Music stem crossfades in** — 2 second fade, always additive, never drops out
+6. **Creature settles into calm awakened idle** — subtle loop animation, remains present
+7. **UI slot fills** — illustrated frame at bottom, 1 of 5
 
 ---
 
@@ -412,4 +414,4 @@ The game is complete when:
 
 ---
 
-*Document version 1.3 — character locked: Cloaked Listener (long-eared, closed-eyed, caped forest creature)*
+*Document version 1.4 — interaction model locked: dormant → awakened; objects 1 (frog) and 3 (mushroom) confirmed; slots 2, 4, 5 TBD*
